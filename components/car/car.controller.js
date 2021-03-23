@@ -1,5 +1,5 @@
 const catchError = require("../../utils/catch-async-err");
-const { Op } = require("sequelize");
+// const { Op } = require("sequelize");
 const {
     models: { Car },
     sequelize,
@@ -18,7 +18,7 @@ exports.createCar = catchError(async (request, response, next) => {
         location,
     });
 
-    response.send({ ok: true, data: { car } });
+    response.send({ ok: true, data: car });
 });
 
 exports.getNearbyCars = catchError(async (request, response, next) => {
@@ -27,12 +27,12 @@ exports.getNearbyCars = catchError(async (request, response, next) => {
     const longitude = parseFloat(lng);
     const latitude = parseFloat(lat);
     const location = `'SRID=4326;POINT(${longitude} ${latitude})'::geometry`;
-
+    // const location = `ST_GeomFromText('POINT(${longitude} ${latitude})')`;
     // better solution
-    const instances = await sequelize.query(
+    const nearByCars = await sequelize.query(
         `SELECT id, model, location, type, status, ST_DistanceSphere(
-            location,
-            ${location}
+            ${location},
+            location
         ) AS distance 
         FROM cars
         WHERE status = 'open'
@@ -51,7 +51,7 @@ exports.getNearbyCars = catchError(async (request, response, next) => {
     // );
     // attributes.push([distance, "distance"]);
     // console.log(attributes);
-    // const instances = await Car.findAll({
+    // const nearByCars = await Car.findAll({
     //     attributes,
     //     where: sequelize.and(
     //         {
@@ -62,9 +62,9 @@ exports.getNearbyCars = catchError(async (request, response, next) => {
     //     order: [[distance, "ASC"]],
     //     limit: 5,
     // });
-    // console.log(instances);
+    // console.log(nearByCars);
 
-    response.status(200).json(instances);
+    response.status(200).json({ ok: true, data: nearByCars[0] });
 });
 
 exports.updateLocation = catchError(async (request, response, next) => {

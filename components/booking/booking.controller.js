@@ -1,44 +1,12 @@
+const paginate = require("express-paginate");
+const catchError = require("../../utils/catch-async-err");
 const {
     models: { Booking, Car },
+    sequelize,
 } = require("../index");
 
-exports.initiateBooking = async (context) => {};
-
-exports.createBooking = async (req, res) => {
-    const { status, initialLocation, finalLocation, amount } = req.body;
-
-    const booking = await Booking.create({
-        status,
-        initialLocation,
-        finalLocation,
-        amount,
-    });
-
-    res.json({ data: { booking } });
-};
-
-exports.get_user_bookings = async (req, res, next) => {
-    const pageskip = parseInt(process.env.PAGE_SIZE, 10) * parseInt(req.query.page, 10);
-    const pageitem = parseInt(process.env.PAGE_SIZE, 10);
-
-    const bookings = await Booking.findAll({
-        where: {
-            user_id: req.userData.userId,
-        },
-        offset: pageskip,
-        limit: pageitem,
-        include: [
-            {
-                model: Car,
-            },
-        ],
-    });
-    res.status(200).json({
-        bookings,
-    });
-};
-
-exports.createUserBooking = async (req, res, next) => {
+exports.createBooking = catchError(async (req, res, next) => {
+    // check if booking exists
     const bookings = await Booking.findAll({
         where: {
             userId: req.user.id,
@@ -51,92 +19,125 @@ exports.createUserBooking = async (req, res, next) => {
             message: "Booking already exists",
         });
     }
+    // create booking
+    const { initialLocation, finalLocation, amount } = req.body;
+    // const attributes = Object.keys(Car.rawAttributes);
+    // const location = sequelize.literal(
+    //     `ST_GeomFromText('POINT(${initialLocation[1]} ${initialLocation[0]})')`
+    // );
 
-    const { initialLocation, finalLocation, amount, maxDistance } = req.body;
-    const attributes = Object.keys(Car.rawAttributes);
-    const location = sequelize.literal(
-        `ST_GeomFromText('POINT(${initialLocation[0]} ${initialLocation[1]})')`
+    // const distance = sequelize.fn(
+    //     "ST_DistanceSphere",
+    //     sequelize.col("car_location"),
+    //     location
+    // );
+    // attributes.push([distance, "distance"]);
+    // let nearByCars = await Car.findAll({
+    //     attributes,
+    //     order: [[distance, "ASC"]],
+    //     where: sequelize.and(
+    //         {
+    //             status: "open",
+    //         },
+    //         sequelize.where(distance, Sequelize.Op.lte, maxDistance)
+    //     ),
+    // });
+    const location = `'SRID=4326;POINT(${initialLocation[1]} ${initialLocation[0]})'::geometry`;
+    const nearByCars = await sequelize.query(
+        `SELECT id, status, ST_DistanceSphere(
+            ${location},
+            location
+        ) AS distanceInMeters
+        FROM cars
+        WHERE status = 'open'
+        ORDER BY cars.location <-> ${location}
+        LIMIT 1;`
     );
-    const distance = sequelize.fn(
-        "ST_DistanceSphere",
-        sequelize.col("car_location"),
-        location
-    );
-    attributes.push([distance, "distance"]);
-    let instances = await Car.findAll({
-        attributes,
-        order: [[distance, "ASC"]],
-        where: sequelize.and(
-            {
-                status: "open",
-            },
-            sequelize.where(distance, Sequelize.Op.lte, maxDistance)
-        ),
-    });
-
+    // console.log(nearByCars);
     const newBooking = await Booking.create({
         userId: req.user.id,
         initialLocation,
         finalLocation,
         status: "inTransit",
         amount,
-        carId: instances[0].id,
+        carId: nearByCars[0][0].id,
     });
 
-    const bookingId = newBooking.id;
     await Car.update(
         {
-            car_status: "inTransit",
+            status: "inTransit",
         },
         {
             where: {
-                id: instances[0].id,
+                id: nearByCars[0][0].id,
             },
         }
     );
 
     res.status(201).json({
-        bookingId,
         message: "Booking created",
+        data: newBooking,
     });
-};
+});
 
-exports.bookings_update = async (req, res, next) => {
-    let booking = {};
-    try {
-        booking = await Booking.findOne({
-            where: {
-                user_id: req.userData.userId,
-                booking_status: "inTransit",
+exports.getUserBookings = catchError(async (req, res, next) => {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10);
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.findAndCountAll({
+        where: {
+            userId: req.user.id,
+        },
+        offset: skip,
+        limit,
+        include: [
+            {
+                model: Car,
+                attributes: ["model", "type", "id"],
             },
-        });
-    } catch (err) {
-        next(errorInit(`${err.message}database connection error`, 500));
-    }
+        ],
+    });
+    const pageCount = Math.ceil(bookings.count / limit);
+    res.status(200).json({
+        ok: true,
+        total: bookings.count,
+        data: bookings.rows,
+        hasMore: paginate.hasNextPages(req)(bookings.count),
+        pages: paginate.getArrayPages(req)(limit, pageCount, page),
+    });
+});
+
+exports.updateBooking = catchError(async (req, res, next) => {
+    const booking = await Booking.findOne({
+        where: {
+            userId: req.user.id,
+            status: "inTransit",
+        },
+    });
+
     if (!booking) {
         res.status(404).json({
+            ok: false,
             message: "Not Found",
         });
-    } else {
-        try {
-            await Car.update(
-                {
-                    car_status: "open",
-                },
-                {
-                    where: {
-                        id: booking.car_id,
-                    },
-                }
-            );
-        } catch (err) {
-            next(errorInit(`${err.message}database connection error`, 500));
-        }
-        booking.booking_status = req.body.status_up;
-        await booking.save();
-
-        res.status(200).json({
-            message: "Updated",
-        });
     }
-};
+    await Car.update(
+        {
+            status: "open",
+        },
+        {
+            where: {
+                id: booking.carId,
+            },
+        }
+    );
+
+    booking.status = req.body.status;
+    await booking.save();
+
+    res.status(200).json({
+        ok: true,
+        message: "Updated",
+    });
+});

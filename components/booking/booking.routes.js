@@ -1,20 +1,20 @@
 const router = require("express").Router();
 const bookingCtrl = require("./booking.controller");
-const checkAuth = require("../middlewares/auth");
+const { protect } = require("../middlewares/auth");
 
 /**
  *Route for Handling of New Booking
  */
-// router.post("/book", checkAuth, bookingCtrl.createBooking);
-
-/**
- *Route for Handling Update of a Booking
- */
-// router.patch("/booking_update", checkAuth, bookingCtrl.updateBooking);
+router.post("/create", protect, bookingCtrl.createBooking);
 
 /**
  *Route for Getting all bookings of the user
  */
-// router.get("/bookings", checkAuth, bookingCtrl.getUserBookings);
+router.get("/me", protect, bookingCtrl.getUserBookings);
+
+/**
+ *Route for Handling Update of a Booking
+ */
+router.patch("/update", protect, bookingCtrl.updateBooking);
 
 module.exports = router;

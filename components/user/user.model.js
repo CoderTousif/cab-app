@@ -60,10 +60,11 @@ module.exports = (sequelize) => {
             },
             phoneNo: {
                 type: DataTypes.BIGINT,
+                // allowNull: false,
                 unique: true,
                 validate: {
                     len: {
-                        args: [10, 10],
+                        args: [10, 14],
                         msg: "Valid phone number is required",
                     },
                 },

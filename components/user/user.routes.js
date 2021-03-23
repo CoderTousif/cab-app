@@ -1,6 +1,5 @@
-
-const router =require("express").Router();
-const userCtrl = require("./user.controller")
+const router = require("express").Router();
+const userCtrl = require("./user.controller");
 /**
  *Route for Handling User SignUp
  */

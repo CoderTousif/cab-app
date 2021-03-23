@@ -12,15 +12,17 @@ module.exports = (sequelize) => {
             },
             status: {
                 type: DataTypes.STRING,
-                defaultValue: "initiated",
-                isIn: [["initiated", "completed", "canceled", "inTransit"]],
+                allowNull: false,
+                validate: {
+                    isIn: [["completed", "canceled", "inTransit"]],
+                },
             },
             initialLocation: {
-                type: DataTypes.GEOMETRY("POINT"),
+                type: DataTypes.GEOMETRY("POINT", 4326),
                 allowNull: false,
             },
             finalLocation: {
-                type: DataTypes.GEOMETRY("POINT"),
+                type: DataTypes.GEOMETRY("POINT", 4326),
                 allowNull: false,
             },
             amount: {
@@ -64,14 +66,19 @@ module.exports = (sequelize) => {
     };
 
     Booking.beforeValidate((booking, _options) => {
-        booking.initialLocation = {
-            type: "POINT",
-            coordinates: booking.initialLocation,
-        };
-        booking.finalLocation = {
-            type: "POINT",
-            coordinates: booking.finalLocation,
-        };
+        // coordinates : [ longitude , latitude ]
+        if (booking.initialLocation) {
+            booking.initialLocation = {
+                type: "POINT",
+                coordinates: [booking.initialLocation[1], booking.initialLocation[0]],
+            };
+        }
+        if (booking.finalLocation) {
+            booking.finalLocation = {
+                type: "POINT",
+                coordinates: [booking.finalLocation[1], booking.finalLocation[0]],
+            };
+        }
     });
 
     return Booking;

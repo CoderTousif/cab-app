@@ -1,39 +1,42 @@
-const { Sequelize, Model, DataTypes } = require("sequelize");
+"use strict";
 
-class Car extends Model {}
-
-module.exports = (sequelize) => {
-    Car.init(
-        {
+module.exports = {
+    up: async (queryInterface, Sequelize) => {
+        /**
+         * Add altering commands here.
+         *
+         *
+         */
+        await queryInterface.createTable("cars", {
             id: {
-                type: DataTypes.UUID,
+                type: Sequelize.UUID,
                 primaryKey: true,
                 defaultValue: Sequelize.UUIDV4,
             },
             model: {
-                type: DataTypes.STRING,
+                type: Sequelize.STRING,
                 allowNull: false,
             },
             type: {
-                type: DataTypes.STRING,
+                type: Sequelize.STRING,
                 allowNull: false,
                 validate: {
-                    isIn: [["sedan", "suv", "hatchback", "sport"]],
+                    isIn: [["sedan", "suv", "hatchback", "sport", "minivan"]],
                 },
             },
             status: {
-                type: DataTypes.STRING,
+                type: Sequelize.STRING,
                 defaultValue: "open",
                 validate: {
                     isIn: [["open", "inTransit", "offline"]],
                 },
             },
             location: {
-                type: DataTypes.GEOMETRY("POINT", 4326),
+                type: Sequelize.GEOMETRY("POINT", 4326),
                 allowNull: false,
             },
             registrationNo: {
-                type: DataTypes.STRING,
+                type: Sequelize.STRING,
                 allowNull: false,
                 unique: true,
                 // We require names to have length of at least 2, and
@@ -41,7 +44,7 @@ module.exports = (sequelize) => {
                 is: /^\w{2,}$/,
             },
             userId: {
-                type: DataTypes.UUID,
+                type: Sequelize.UUID,
                 allowNull: false,
                 index: true,
                 references: {
@@ -49,29 +52,16 @@ module.exports = (sequelize) => {
                     key: "id",
                 },
             },
-        },
-        {
-            sequelize,
-            tableName: "cars",
-            timestamps: true,
-        }
-    );
-
-    Car.associate = (models) => {
-        Car.belongsTo(models.User, {
-            foreignKey: "userId",
         });
-    };
+    },
 
-    Car.beforeValidate((car, _options) => {
-        // coordinates : [ longitude , latitude ]
-        if (car.location) {
-            car.location = {
-                type: "POINT",
-                coordinates: [car.location[1], car.location[0]],
-            };
-        }
-    });
-
-    return Car;
+    down: async (queryInterface, Sequelize) => {
+        /**
+         * Add reverting commands here.
+         *
+         * Example:
+         *
+         */
+        await queryInterface.dropTable("cars");
+    },
 };

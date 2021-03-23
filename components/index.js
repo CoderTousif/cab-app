@@ -1,9 +1,8 @@
 const { Sequelize } = require("sequelize");
-const config = require("../config/config.json")[process.env.NODE_ENV];
+const config = require("../config/config")[process.env.NODE_ENV];
 const user = require("./user/user.model");
 const booking = require("./booking/booking.model");
 const car = require("./car/car.model");
-
 
 const sequelize = new Sequelize(
     config.database,

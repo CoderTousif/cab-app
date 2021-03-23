@@ -1,14 +1,30 @@
-const express = require("express");
+// const express = require("express");
+const { App } = require("@tinyhttp/app");
+const { logger } = require("@tinyhttp/logger");
+const sirv = require("sirv");
 const pathToSwaggerUi = require("swagger-ui-dist").absolutePath();
-
-const app = express();
-
-app.use(express.json());
-app.use(express.static(pathToSwaggerUi));
+const paginate = require("express-paginate");
+const errorHandler = require("./error-handler");
 // routes
 const userRouter = require("./components/user/user.routes");
 const carRouter = require("./components/car/car.routes");
 const bookingRouter = require("./components/booking/booking.routes");
+
+const app = new App({
+    onError: errorHandler,
+});
+
+app.use(logger());
+app.use("/", sirv(pathToSwaggerUi));
+
+app.use(paginate.middleware(10, 50));
+
+app.all(function (req, res, next) {
+    // set default or minimum is 10 (as it was prior to v0.2.0)
+    if (req.query.limit <= 10) req.query.limit = 10;
+    if (req.body.limit <= 10) req.body.limit = 10;
+    next();
+});
 
 app.use("/users", userRouter);
 app.use("/cars", carRouter);
@@ -20,28 +36,5 @@ app.use("/bookings", bookingRouter);
 //     console.log("=================================");
 //     console.error(error);
 // });
-
-app.use((err, _req, res, _next) => {
-    console.log(err.name);
-    if (err.statusCode < 500) {
-        res.status(err.statusCode).json({
-            ok: false,
-            error: { statusCode: err.statusCode, message: err.message },
-            stack: err.stack,
-        });
-    } else {
-        const statusCode = err.statusCode || 500;
-        let message = "Something went wrong";
-        if (err?.errors && err?.errors[0]?.message) {
-            message = err?.errors[0]?.message;
-        }
-
-        console.log(err);
-        res.status(statusCode).json({
-            ok: false,
-            error: { statusCode: statusCode, message },
-        });
-    }
-});
 
 module.exports = app;
