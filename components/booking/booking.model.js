@@ -27,8 +27,7 @@ module.exports = (sequelize) => {
             },
             amount: {
                 type: DataTypes.INTEGER,
-                allowNull: true,
-                defaultValue: 0,
+                allowNull: false,
             },
             userId: {
                 type: DataTypes.UUID,
@@ -58,10 +57,12 @@ module.exports = (sequelize) => {
     Booking.associate = (models) => {
         Booking.belongsTo(models.User, {
             foreignKey: "userId",
+            as: "user",
         });
 
         Booking.belongsTo(models.Car, {
             foreignKey: "carId",
+            as: "car",
         });
     };
 

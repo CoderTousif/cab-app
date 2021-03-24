@@ -1,20 +1,22 @@
-const router = require("express").Router();
 const bookingCtrl = require("./booking.controller");
 const { protect } = require("../middlewares/auth");
 
-/**
- *Route for Handling of New Booking
- */
-router.post("/create", protect, bookingCtrl.createBooking);
+module.exports = (router) => {
+    const prefix = "/bookings";
+    /**
+     *Route for Handling of New Booking
+     */
+    router.post(`${prefix}/create`, protect, bookingCtrl.createBooking);
 
-/**
- *Route for Getting all bookings of the user
- */
-router.get("/me", protect, bookingCtrl.getUserBookings);
+    /**
+     *Route for Getting all bookings of the user
+     */
+    router.get(`${prefix}/me`, protect, bookingCtrl.getUserBookings);
 
-/**
- *Route for Handling Update of a Booking
- */
-router.patch("/update", protect, bookingCtrl.updateBooking);
+    /**
+     *Route for Handling Update of a Booking
+     */
+    router.patch(`${prefix}/update`, protect, bookingCtrl.updateBooking);
 
-module.exports = router;
+    return router;
+};

@@ -1,22 +1,44 @@
-const router = require("express").Router();
 const carCtrl = require("./car.controller");
 const { protect } = require("../middlewares/auth");
 
-/**
- *Route for Adding of New car
- */
-router.post("/create", protect, carCtrl.createCar);
+module.exports = (router) => {
+    const prefix = "/cars";
+    /**
+     * @swagger
+     * /users:
+     *    get:
+     *      description: This should return all users
+     */
+    router.post(`${prefix}/create`, protect, carCtrl.createCar);
 
-router.get("/near-by", protect, carCtrl.getNearbyCars);
+    /**
+     * @swagger
+     * /users:
+     *    get:
+     *      description: This should return all users
+     */
+    router.get(`${prefix}/near-by`, protect, carCtrl.getNearbyCars);
 
-/**
- *Route for Handling Update of a car
- */
-// router.patch("/car_update", protect, carCtrl.updateCar);
+    /**
+     *Route for Handling Update of a car
+     */
+    // router.patch("/car_update", protect, carCtrl.updateCar);
 
-/**
- *Route for Getting all cars of the user
- */
-// router.get("/cars", protect, carCtrl.getUserCars);
+    /**
+     * @swagger
+     * /users:
+     *    get:
+     *      description: This should return all users
+     */
+    router.get(`${prefix}/me`, protect, carCtrl.getMyCar);
 
-module.exports = router;
+    /**
+     * @swagger
+     * /users:
+     *    get:
+     *      description: This should return all users
+     */
+    router.get(`${prefix}/all`, carCtrl.getAllCars);
+
+    return router;
+};

@@ -3,6 +3,15 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 
 class User extends Model {
+    toJSON() {
+        return {
+            ...this.get(),
+            password: undefined,
+            passwordChangedAt: undefined,
+            passwordResetToken: undefined,
+            resetTokenExpiresAt: undefined,
+        };
+    }
     async correctPassword(candidatePass, userPass) {
         // check if given login password is same as user password
         // candidatePass is not hashed but userPass is hashed
@@ -57,10 +66,13 @@ module.exports = (sequelize) => {
             name: {
                 type: DataTypes.STRING,
                 allowNull: false,
+                validate: {
+                    len: [2, 60],
+                },
             },
-            phoneNo: {
+            phone: {
                 type: DataTypes.BIGINT,
-                // allowNull: false,
+                allowNull: false,
                 unique: true,
                 validate: {
                     len: {
@@ -94,7 +106,9 @@ module.exports = (sequelize) => {
             role: {
                 type: DataTypes.STRING,
                 defaultValue: "user",
-                isIn: [["admin", "driver", "user"]],
+                validate: {
+                    isIn: [["admin", "driver", "user"]],
+                },
             },
             rating: {
                 type: DataTypes.SMALLINT,
@@ -115,11 +129,13 @@ module.exports = (sequelize) => {
     User.associate = (models) => {
         User.hasMany(models.Booking, {
             foreignKey: "userId",
+            as: "bookings",
             // {name: 'userId',field: 'user_id'}
         });
 
         User.hasOne(models.Car, {
-            foreignKey: "id",
+            foreignKey: "userId",
+            as: "car",
         });
     };
 

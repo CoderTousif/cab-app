@@ -4,54 +4,45 @@ module.exports = {
     up: async (queryInterface, Sequelize) => {
         /**
          * Add altering commands here.
-         *
-         *
          */
         await queryInterface.createTable("cars", {
             id: {
-                type: Sequelize.UUID,
+                type: Sequelize.DataTypes.UUID,
                 primaryKey: true,
                 defaultValue: Sequelize.UUIDV4,
             },
             model: {
-                type: Sequelize.STRING,
+                type: Sequelize.DataTypes.STRING,
                 allowNull: false,
             },
             type: {
-                type: Sequelize.STRING,
+                type: Sequelize.DataTypes.STRING,
                 allowNull: false,
-                validate: {
-                    isIn: [["sedan", "suv", "hatchback", "sport", "minivan"]],
-                },
             },
             status: {
-                type: Sequelize.STRING,
+                type: Sequelize.DataTypes.STRING,
                 defaultValue: "open",
-                validate: {
-                    isIn: [["open", "inTransit", "offline"]],
-                },
             },
             location: {
-                type: Sequelize.GEOMETRY("POINT", 4326),
+                type: Sequelize.DataTypes.GEOMETRY("POINT", 4326),
                 allowNull: false,
             },
             registrationNo: {
-                type: Sequelize.STRING,
+                type: Sequelize.DataTypes.STRING,
                 allowNull: false,
                 unique: true,
-                // We require names to have length of at least 2, and
-                // only use letters, numbers and underscores.
-                is: /^\w{2,}$/,
             },
             userId: {
-                type: Sequelize.UUID,
+                type: Sequelize.DataTypes.UUID,
                 allowNull: false,
                 index: true,
                 references: {
-                    model: "users",
+                    model: { tableName: "users" },
                     key: "id",
                 },
             },
+            createdAt: Sequelize.DataTypes.DATE,
+            updatedAt: Sequelize.DataTypes.DATE,
         });
     },
 

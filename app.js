@@ -1,21 +1,21 @@
-// const express = require("express");
-const { App } = require("@tinyhttp/app");
+const express = require("express");
+const router = require("express").Router();
 const { logger } = require("@tinyhttp/logger");
 const sirv = require("sirv");
-const pathToSwaggerUi = require("swagger-ui-dist").absolutePath();
+// const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 const paginate = require("express-paginate");
 const errorHandler = require("./error-handler");
+const swaggerSpecs = require("./swagger");
 // routes
-const userRouter = require("./components/user/user.routes");
-const carRouter = require("./components/car/car.routes");
-const bookingRouter = require("./components/booking/booking.routes");
+const userRoutes = require("./components/user/user.routes");
+const carRoutes = require("./components/car/car.routes");
+const bookingRoutes = require("./components/booking/booking.routes");
 
-const app = new App({
-    onError: errorHandler,
-});
+const app = express();
 
+app.use(express.json());
 app.use(logger());
-app.use("/", sirv(pathToSwaggerUi));
 
 app.use(paginate.middleware(10, 50));
 
@@ -26,9 +26,11 @@ app.all(function (req, res, next) {
     next();
 });
 
-app.use("/users", userRouter);
-app.use("/cars", carRouter);
-app.use("/bookings", bookingRouter);
+// const specs = swaggerJsdoc(swaggerSpecs);
+app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpecs, { explorer: true }));
+app.use(userRoutes(router));
+app.use(carRoutes(router));
+app.use(bookingRoutes(router));
 
 // app.on("error", (error) => {
 //     console.log("=================================");
@@ -36,5 +38,7 @@ app.use("/bookings", bookingRouter);
 //     console.log("=================================");
 //     console.error(error);
 // });
+
+app.use(errorHandler);
 
 module.exports = app;

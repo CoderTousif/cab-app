@@ -21,6 +21,18 @@ exports.createCar = catchError(async (request, response, next) => {
     response.send({ ok: true, data: car });
 });
 
+exports.getAllCars = catchError(async (request, response, next) => {
+    const cars = await Car.findAll();
+
+    response.send({ ok: true, data: cars });
+});
+
+exports.getMyCar = catchError(async (request, response, next) => {
+    const car = await Car.findOne({ where: { userId: request.user.id } });
+
+    response.send({ ok: true, data: car });
+});
+
 exports.getNearbyCars = catchError(async (request, response, next) => {
     const { lng, lat } = request.query;
 

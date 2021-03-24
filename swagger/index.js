@@ -1,6 +1,7 @@
+// const path = require('path');
 const users = require("./users");
-const cars = require("./car");
-const booking = require("./booking");
+const cars = require("./cars");
+const bookings = require("./bookings");
 
 module.exports = {
     openapi: "3.0.0",
@@ -11,10 +12,24 @@ module.exports = {
     },
     servers: [
         {
-            url: "http://localhost:5000/api",
+            url: "http://localhost:5000",
             description: "local dev",
         },
     ],
+    // tags: [
+    //     {
+    //         name: "users",
+    //         description: "Operations about user",
+    //     },
+    //     {
+    //         name: "cars",
+    //         description: "Operations about car",
+    //     },
+    //     {
+    //         name: "bookings",
+    //         description: "Everything about your booking",
+    //     },
+    // ],
     consumes: ["application/json"],
     produces: ["application/json"],
     components: {
@@ -30,20 +45,20 @@ module.exports = {
         bearerAuth: [],
     },
     paths: {
-        "/login": {
-            post: users.signuser,
+        "/users/signup": {
+            post: users.signup,
         },
-        "/signup": {
-            post: users.postuser,
+        "/users/login": {
+            post: users.login,
         },
-        "/nearbycars/?lng={lng}&lat={lat}&maxDistance={maxDistance}": {
-            get: cars.get_nearby_car,
+        "/cars/near-by?lat={lat}&lng={lng}": {
+            get: cars.getNearbyCars,
         },
-        "/bookings?page={page}": {
-            get: booking.getuserbookings,
+        "/bookings/create": {
+            post: bookings.createBooking,
         },
-        "/book?maxDistance={maxDistance}": {
-            post: booking.makebookings,
+        "/bookings": {
+            get: bookings.getUserBookings,
         },
     },
 };

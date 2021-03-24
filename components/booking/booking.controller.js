@@ -5,7 +5,7 @@ const {
     sequelize,
 } = require("../index");
 
-exports.createBooking = catchError(async (req, res, next) => {
+exports.createBooking = catchError(async (req, res, _next) => {
     // check if booking exists
     const bookings = await Booking.findAll({
         where: {
@@ -93,7 +93,7 @@ exports.getUserBookings = catchError(async (req, res, next) => {
         limit,
         include: [
             {
-                model: Car,
+                association: "car",
                 attributes: ["model", "type", "id"],
             },
         ],
@@ -104,7 +104,7 @@ exports.getUserBookings = catchError(async (req, res, next) => {
         total: bookings.count,
         data: bookings.rows,
         hasMore: paginate.hasNextPages(req)(bookings.count),
-        pages: paginate.getArrayPages(req)(limit, pageCount, page),
+        links: paginate.getArrayPages(req)(limit, pageCount, page),
     });
 });
 

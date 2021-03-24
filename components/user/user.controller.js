@@ -3,7 +3,7 @@ const {
     models: { User },
 } = require("../index");
 const AppError = require("../../utils/app-error");
-const catchAsyncError = require("../../utils/catch-async-err");
+const catchError = require("../../utils/catch-async-err");
 // const Profile = require("../profile/profile.model");
 
 // const downloadUrl = backblaze();
@@ -43,14 +43,17 @@ const signAndSendToken = (user, response) => {
 };
 
 // create user account
-exports.signup = catchAsyncError(async (request, response, next) => {
-    const { name, email, password, confirmPassword } = request.body;
+exports.signup = catchError(async (request, response, next) => {
+    const { name, email, phone, photo, password, confirmPassword } = request.body;
     // console.log(request.request.body);
     // never do: const newUser = await User.create(req.body)
     // check if user account already exists in the db
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword || !phone) {
         return next(
-            new AppError(400, "A name, email, password and confirmPassword are required.")
+            new AppError(
+                400,
+                "Name, email,phone, password and confirmPassword are required."
+            )
         );
     }
 
@@ -72,6 +75,8 @@ exports.signup = catchAsyncError(async (request, response, next) => {
     const newUser = await User.create({
         name,
         email,
+        phone,
+        photo,
         password,
     });
 
@@ -80,7 +85,7 @@ exports.signup = catchAsyncError(async (request, response, next) => {
 });
 
 // Stage 1 Authentication --- Login --- check for identity
-exports.login = catchAsyncError(async (request, response, next) => {
+exports.login = catchError(async (request, response, next) => {
     const { email, password } = request.body;
     if (!email || !password) {
         return next(new AppError(400, "An email and password is required."));
@@ -109,3 +114,15 @@ exports.logout = (request, response) => {
         message: "success",
     });
 };
+
+exports.getMe = catchError(async (request, response) => {
+    const me = await User.findOne({
+        where: { id: request.user.id },
+        include: ["car", "bookings"],
+    });
+
+    response.json({
+        ok: true,
+        data: me,
+    });
+});

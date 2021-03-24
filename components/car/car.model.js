@@ -45,7 +45,7 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 index: true,
                 references: {
-                    model: "users",
+                    model: { tableName: "users" },
                     key: "id",
                 },
             },
@@ -60,6 +60,12 @@ module.exports = (sequelize) => {
     Car.associate = (models) => {
         Car.belongsTo(models.User, {
             foreignKey: "userId",
+            as: "user",
+        });
+
+        Car.hasMany(models.Booking, {
+            foreignKey: "id",
+            as: "bookings",
         });
     };
 
